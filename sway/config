@@ -16,7 +16,7 @@ set $right l
 # Your preferred terminal emulator
 set $term foot
 # Your preferred application launcher
-set $menu wmenu-run -f "JetBrainsMonoNLNerdFont-Regular:size=16"
+set $menu wmenu-run -f "JetBrainsMonoNLNerdFont-Bold 18"
 #set $menu wmenu
 
 ### Output configuration
