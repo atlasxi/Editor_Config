@@ -1,0 +1,19 @@
+#!/bin/bash
+device="intel_backlight"
+brightness_cache="$HOME/.cache/brightness"
+current_brightness=$(brightnessctl --device=$device -m | awk -F, '{ print $3 }')
+send_notification() {
+    dunstify -h string:x-dunst-stack-tag:brightness -h int:value:$current_brightness "current_brightness:$1"
+}
+while getopts "ids:mh" opt; do
+	case $opt in
+		i)
+		brightnessctl set +2%
+		send_notification $current_brightness
+		;;
+		d)
+		brightnessctl set 2%-
+		send_notification $current_brightness
+		;;
+	esac
+done

@@ -1,0 +1,16 @@
+#!/bin/bash
+# 获取当前电池电量
+current_battery=$(sudo tlp-stat -b | grep "Charge" | grep -E '[0-9][0-9]\.[0-9]' -o)
+rest_time=$(acpi | awk '{print $5}' | grep -oE '^[^0-9]*[0-9][^0-9]*([0-9])')
+# 判断电池电量并输出对应图标和电量百分比
+if (( $(echo "$current_battery > 90" | bc -l) )); then
+    echo ' '$current_battery'%''['"$rest_time"'h'']'
+elif (( $(echo "$current_battery > 75" | bc -l) )); then
+    echo ' '$current_battery'%''['"$rest_time"'h'']'
+elif (( $(echo "$current_battery > 50" | bc -l) )); then
+    echo ' '$current_battery'%''['"$rest_time"'h'']'
+elif (( $(echo "$current_battery > 15" | bc -l) )); then
+    echo ' '$current_battery'%''['"$rest_time"'h'']'
+else
+    echo ' '$current_battery'%''['"$rest_time"'h'']'
+fi

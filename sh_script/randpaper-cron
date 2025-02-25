@@ -1,0 +1,14 @@
+wallpaper_path="$HOME/.local/share/wallpaper"
+date_last_bg="$(stat -c "%Y" "$wallpaper_path")"
+date_today=$(date +%s)
+
+refresh_bg(){
+random_wallpaper=$(find $wallpaper_path -type f  | grep -e .jpeg -e .jpg -e .png -e .gif | shuf -n 1)
+feh --bg-fill "$random_wallpaper"
+}
+
+#if [[ $(("$date_today" - "$date_last_bg")) -gt 300 ]];then
+#	refresh_bg
+#fi
+refresh_bg
+

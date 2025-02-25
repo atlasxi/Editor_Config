@@ -1,0 +1,70 @@
+device="@DEFAULT_AUDIO_SINK@"
+volume_cache="$HOME/.cache/volume"
+current_volume=$(wpctl get-volume $device | awk '{print $2}')
+# 确保 current_volume 是一个有效的小数，以防 wpctl 输出格式不符合预期
+current_volume=$(printf "%.2f" "$current_volume")
+
+# 使用函数来发送通知，确保变量在函数内部被正确展开
+send_notification() {
+    local vol_percent=$(echo "$1 * 100" | bc)
+    dunstify -h string:x-dunst-stack-tag:volume -h int:value:$vol_percent "current_volume:$1"
+}
+
+while getopts "ids:mh" opt; do
+    case $opt in
+        i)
+            new_volume=$(echo "$current_volume + 0.02" | bc)
+            # 检查新音量是否超过 1.0
+            if (( $(echo "$new_volume > 1.0" | bc -l) )); then
+                new_volume=1.0
+            fi
+            wpctl set-volume $device $new_volume
+            current_volume=$new_volume
+            echo $current_volume > $volume_cache
+            send_notification "$current_volume"
+            ;;
+        d)
+            new_volume=$(echo "$current_volume - 0.02" | bc)
+            # 检查新音量是否低于 0.0
+            if (( $(echo "$new_volume < 0.0" | bc -l) )); then
+                new_volume=0.0
+            fi
+            wpctl set-volume $device $new_volume
+            current_volume=$new_volume
+            echo $current_volume > $volume_cache
+            send_notification "$current_volume"
+            ;;
+        m)
+            if (( $(echo "$current_volume == 0.00" | bc -l) )); then
+                if [[ -f $volume_cache && -r $volume_cache ]]; then
+                    cached_volume=$(cat $volume_cache)
+                    # 确保从缓存中读取的也是一个有效的小数
+                    cached_volume=$(printf "%.2f" "$cached_volume")
+                    if (( $(echo "$cached_volume == 0.00" | bc -l) )); then
+                        # 如果缓存也是 0.00，则设置一个默认的音量值
+			brightnessctl --device="platform::mute" set 0
+                        default_volume=0.5
+                        wpctl set-volume $device $default_volume
+                        current_volume=$default_volume
+                    else
+			brightnessctl --device="platform::mute" set 100%
+                        wpctl set-volume $device $cached_volume
+                        current_volume=$cached_volume
+                    fi
+                else
+                    # 如果没有缓存文件或不可读，则设置一个默认的音量值
+		    brightnessctl --device="platform::mute" set 0
+                    default_volume=0.5
+                    wpctl set-volume $device $default_volume
+                    current_volume=$default_volume
+                fi
+            else
+		brightnessctl --device="platform::mute" set 100%
+                wpctl set-volume $device 0.0
+                current_volume=0.0
+            fi
+            echo $current_volume > $volume_cache
+            send_notification "$current_volume"
+            ;;
+    esac
+done
